@@ -120,94 +120,128 @@ Based on:
 - "Auto-Encoding Variational Bayes" by Kingma and Welling (2013)
 - "Convolutional Variational Autoencoder" implementations in PyTorch
 
-# DCGAN Implementation
+# DCGAN Implementation in PyTorch
+This notebook implements Deep Convolutional GAN (DCGAN) following the architecture from the original [DCGAN paper](https://arxiv.org/abs/1511.06434).
 
-Implementation of Deep Convolutional GAN (DCGAN) following the architecture from ["Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks"](https://arxiv.org/abs/1511.06434) by Radford et al.
+## Quick Start
+Run all cells in order. The notebook contains:
+1. Package installation and imports
+2. Model implementation (Generator and Discriminator)
+3. Training loop
+4. Visualization utilities
 
-## Architecture
-
-### Generator
-- Input: Random noise vector z (100-dimensional)
-- Architecture follows DCGAN paper:
-  - Transposed convolutions for upsampling
-  - BatchNorm in every layer except output
-  - ReLU activations
-  - Tanh in output layer
-- Progressive upsampling: 1x1 → 4x4 → 8x8 → 16x16 → 32x32
-- No fully connected layers
-
-### Discriminator
-- Input: 32x32x3 images
-- Strided convolutions for downsampling
-- BatchNorm in all layers except first and last
-- LeakyReLU activations (slope=0.2)
-- Sigmoid output
-- No fully connected layers
-
-## Implementation Details
-
-- Framework: PyTorch Lightning
-- Dataset: CIFAR-10 (32x32 RGB images)
-- Batch size: 128
-- Learning rate: 0.0002
-- Beta1: 0.5 (Adam optimizer)
-- Epochs: 25
-
-### Key Features
-- Manual optimization for better training control
-- Proper weight initialization (N(0, 0.02))
-- High-quality image upscaling for visualization
-- Training progress monitoring
-- Latent space interpolation
-
-## Results
-The model generates 32x32 RGB images and includes:
-- Training loss curves for both networks
-- Generated sample grids
-- Latent space interpolations
-- High-resolution upscaled outputs
+## Architecture Overview
+- **Generator**: Random noise → Transposed Conv → 32x32 RGB images
+- **Discriminator**: 32x32 RGB images → Strided Conv → Binary classification
 
 ## Usage
-
+Just run the cells in order:
 ```python
 # Training
-from dcgan import train_dcgan
-model = train_dcgan()
+model = train_dcgan()  # Takes about 30min on GPU
 
-# Testing and Visualization
-from test_dcgan import (
-    plot_current_state,
-    plot_training_curves,
-    interpolate_latent_space,
-    save_samples
-)
-
-# Generate and visualize samples
+# Generate samples
 plot_current_state(model)
 plot_training_curves(model)
 interpolate_latent_space(model)
-save_samples(model, 'samples.png')
 ```
 
-## File Structure
-- `dcgan.py`: Main implementation
-- `test_dcgan.py`: Visualization and testing utilities
-
-## Requirements
+## Required Packages
+```python
+!pip install pytorch-lightning torchvision
 ```
-torch
-torchvision
-pytorch-lightning
-matplotlib
-numpy
-PIL
+
+## Training Parameters
+- Dataset: CIFAR-10 (downloads automatically)
+- Batch size: 128
+- Learning rate: 0.0002
+- Epochs: 25 (adjust in training cell)
+
+## Visualization Functions
+- `plot_current_state(model)`: Grid of generated samples
+- `plot_training_curves(model)`: G and D losses
+- `interpolate_latent_space(model)`: Smooth transitions
+- `save_samples(model, filename)`: Save high-res samples
+
+## GPU Usage
+The notebook automatically uses GPU if available via `accelerator='auto'`
+
+## Troubleshooting
+- If memory error: Reduce batch_size
+- If poor results: Increase epochs
+- If CUDA error: Restart runtime
+
+# Conditional VAE vs Conditional GAN Implementation
+This notebook implements and compares two conditional generative models: cVAE and cGAN.
+
+## Models Overview
+
+### Conditional VAE (cVAE)
+- Extends VAE with class conditioning
+- Both encoder and decoder see class labels
+- Trained with reconstruction + KL loss
+- More stable training, deterministic outputs
+
+### Conditional GAN (cGAN)
+- Extends DCGAN with class conditioning
+- G and D both receive class information
+- Trained adversarially
+- Potentially sharper outputs, more varied samples
+
+## Quick Start
+Run all cells in order:
+```python
+# Train both models
+cvae_model = train_cvae()
+cgan_model = train_cgan()
+
+# Compare results
+compare_models(cvae_model, cgan_model)
+```
+
+## Dataset
+- MNIST (10 classes, downloads automatically)
+- Shows clear conditioning effects
+- Easy to validate class-conditional generation
+
+## Conditioning Methods
+```python
+# Generate specific digits
+samples_cvae = cvae_model.generate(class_label=5)  # Generate '5's
+samples_cgan = cgan_model.generate(class_label=5)  # Generate '5's
+
+# Interpolate between classes
+interpolate_classes(model, start_class=0, end_class=9)
+```
+
+## Comparison Metrics
+- Sample quality per class
+- Conditioning accuracy
+- Generation diversity
+- Training stability
+
+## Visualization Functions
+- Side-by-side generation comparison
+- Class-conditional interpolation
+- Training curves comparison
+- Confusion matrices for generated samples
+
+## Required Packages
+```python
+!pip install pytorch-lightning torchvision sklearn
 ```
 
 ## Training Tips
-1. Monitor D(x) and D(G(z)) to ensure balanced training
-2. Watch for mode collapse (G diversity)
-3. Ensure proper image normalization (-1 to 1)
-4. Use manual optimization for better control
+- cVAE: Watch reconstruction quality per class
+- cGAN: Monitor discriminator per-class accuracy
+- Both: Check for class-conditional mode collapse
 
-## Acknowledgments
-Based on the DCGAN paper by Radford et al. Architecture and hyperparameters follow the original paper's specifications.
+## Outputs
+Both models will generate:
+- Class-specific samples
+- Class interpolations
+- Quality metrics per class
+- Generated sample grids
+
+## GPU Usage
+Automatic GPU detection and usage through PyTorch Lightning
