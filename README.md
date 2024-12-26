@@ -119,3 +119,95 @@ The notebook automatically installs:
 Based on:
 - "Auto-Encoding Variational Bayes" by Kingma and Welling (2013)
 - "Convolutional Variational Autoencoder" implementations in PyTorch
+
+# DCGAN Implementation
+
+Implementation of Deep Convolutional GAN (DCGAN) following the architecture from ["Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks"](https://arxiv.org/abs/1511.06434) by Radford et al.
+
+## Architecture
+
+### Generator
+- Input: Random noise vector z (100-dimensional)
+- Architecture follows DCGAN paper:
+  - Transposed convolutions for upsampling
+  - BatchNorm in every layer except output
+  - ReLU activations
+  - Tanh in output layer
+- Progressive upsampling: 1x1 → 4x4 → 8x8 → 16x16 → 32x32
+- No fully connected layers
+
+### Discriminator
+- Input: 32x32x3 images
+- Strided convolutions for downsampling
+- BatchNorm in all layers except first and last
+- LeakyReLU activations (slope=0.2)
+- Sigmoid output
+- No fully connected layers
+
+## Implementation Details
+
+- Framework: PyTorch Lightning
+- Dataset: CIFAR-10 (32x32 RGB images)
+- Batch size: 128
+- Learning rate: 0.0002
+- Beta1: 0.5 (Adam optimizer)
+- Epochs: 25
+
+### Key Features
+- Manual optimization for better training control
+- Proper weight initialization (N(0, 0.02))
+- High-quality image upscaling for visualization
+- Training progress monitoring
+- Latent space interpolation
+
+## Results
+The model generates 32x32 RGB images and includes:
+- Training loss curves for both networks
+- Generated sample grids
+- Latent space interpolations
+- High-resolution upscaled outputs
+
+## Usage
+
+```python
+# Training
+from dcgan import train_dcgan
+model = train_dcgan()
+
+# Testing and Visualization
+from test_dcgan import (
+    plot_current_state,
+    plot_training_curves,
+    interpolate_latent_space,
+    save_samples
+)
+
+# Generate and visualize samples
+plot_current_state(model)
+plot_training_curves(model)
+interpolate_latent_space(model)
+save_samples(model, 'samples.png')
+```
+
+## File Structure
+- `dcgan.py`: Main implementation
+- `test_dcgan.py`: Visualization and testing utilities
+
+## Requirements
+```
+torch
+torchvision
+pytorch-lightning
+matplotlib
+numpy
+PIL
+```
+
+## Training Tips
+1. Monitor D(x) and D(G(z)) to ensure balanced training
+2. Watch for mode collapse (G diversity)
+3. Ensure proper image normalization (-1 to 1)
+4. Use manual optimization for better control
+
+## Acknowledgments
+Based on the DCGAN paper by Radford et al. Architecture and hyperparameters follow the original paper's specifications.
